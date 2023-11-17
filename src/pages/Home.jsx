@@ -17,7 +17,9 @@ export const Home = () => {
   const { posts, tags } = useSelector((state) => state.posts);
 
   const isPostsLoading = posts.status === "loading";
+  const isTagsLoading = tags.status === "loading";
 
+  //получаем посты и теги с бэка, можно это делать и в App.js
   React.useEffect(() => {
     dispatch(fetchPosts());
     dispatch(fetchTags());
@@ -43,7 +45,7 @@ export const Home = () => {
                 id={obj._id}
                 key={index}
                 title={obj.title}
-                imageUrl="https://res.cloudinary.com/practicaldev/image/fetch/s--UnAfrEG8--/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/icohm5g0axh9wjmu4oc3.png"
+                imageUrl={obj.imageUrl}
                 user={obj.user}
                 createdAt={obj.createdAt}
                 viewsCount={obj.viewsCount}
@@ -55,10 +57,7 @@ export const Home = () => {
           )}
         </Grid>
         <Grid xs={4} item>
-          <TagsBlock
-            items={["react", "typescript", "заметки"]}
-            isLoading={false}
-          />
+          <TagsBlock items={tags.items} isLoading={isTagsLoading} />
           <CommentsBlock
             items={[
               {
