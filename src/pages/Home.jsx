@@ -15,6 +15,7 @@ import { fetchPosts, fetchTags } from "../redux/slices/posts";
 export const Home = () => {
   const dispatch = useDispatch();
   const { posts, tags } = useSelector((state) => state.posts);
+  const userData = useSelector((state) => state.auth.data);
 
   const isPostsLoading = posts.status === "loading";
   const isTagsLoading = tags.status === "loading";
@@ -45,13 +46,16 @@ export const Home = () => {
                 id={obj._id}
                 key={index}
                 title={obj.title}
-                imageUrl={obj.imageUrl}
+                imageUrl={
+                  obj.imageUrl && `http://localhost:4444${obj.imageUrl}`
+                }
                 user={obj.user}
                 createdAt={obj.createdAt}
                 viewsCount={obj.viewsCount}
                 commentsCount={3}
                 tags={obj.tags}
-                isEditable
+                //посты могут удалять только авторы (проверка по id)
+                isEditable={userData?._id === obj.user._id}
               />
             )
           )}
