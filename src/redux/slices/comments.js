@@ -10,8 +10,21 @@ export const fetchComments = createAsyncThunk(
   }
 );
 
+//запрос на последние 5 комментариев из бд
+export const fetchLastComments = createAsyncThunk(
+  "comments/fetchLastComments",
+  async () => {
+    const { data } = await axios.get(`/comments`);
+    return data;
+  }
+);
+
 const initialState = {
   comments: {
+    items: [],
+    status: "loading",
+  },
+  lastComments: {
     items: [],
     status: "loading",
   },
@@ -34,6 +47,18 @@ const commentsSlice = createSlice({
       .addCase(fetchComments.rejected, (state) => {
         state.comments.items = [];
         state.comments.status = "error";
+      })
+      //получение последних 5 комментариев из бд
+      .addCase(fetchLastComments.pending, (state) => {
+        state.lastComments.status = "loading";
+      })
+      .addCase(fetchLastComments.fulfilled, (state, action) => {
+        state.lastComments.items = action.payload;
+        state.lastComments.status = "loaded";
+      })
+      .addCase(fetchLastComments.rejected, (state) => {
+        state.lastComments.items = [];
+        state.lastComments.status = "error";
       });
   },
 });

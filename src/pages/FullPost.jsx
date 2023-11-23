@@ -9,11 +9,14 @@ import { AddComment } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
 import ReactMarkdown from "react-markdown";
 import { fetchComments } from "../redux/slices/comments";
+import { selectIsAuth } from "../redux/slices/auth";
 
 export const FullPost = () => {
   const dispatch = useDispatch();
   const comments = useSelector((state) => state.comments.comments);
   const isCommentsLoading = comments.status === "loading";
+
+  const isAuth = useSelector(selectIsAuth);
 
   const [data, setData] = React.useState();
   const [isLoading, setIsLoading] = React.useState(true);
@@ -36,6 +39,16 @@ export const FullPost = () => {
     dispatch(fetchComments(id));
   }, [dispatch, id]);
 
+  //обновление комментариев при добавлении нового
+  const updateComments = async () => {
+    try {
+      await dispatch(fetchComments(id));
+    } catch (error) {
+      console.warn(error);
+      alert("Ошибка при обновлении комментариев");
+    }
+  };
+
   if (isLoading) {
     return <Post isLoading={isLoading} isFullPost />;
   }
@@ -49,13 +62,13 @@ export const FullPost = () => {
         user={data.user}
         createdAt={data.createdAt}
         viewsCount={data.viewsCount}
-        commentsCount={3}
+        commentsCount={data.commentsCount}
         tags={data.tags}
         isFullPost
       >
         <ReactMarkdown children={data.text} />
       </Post>
-      <AddComment />
+      {isAuth && <AddComment updateComments={updateComments} />}
       {isCommentsLoading ? (
         <CommentsBlock isLoading={true} />
       ) : comments.items && comments.items.length > 0 ? (

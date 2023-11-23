@@ -11,21 +11,25 @@ import { Post } from "../components/Post";
 import { TagsBlock } from "../components/TagsBlock";
 import { CommentsBlock } from "../components/CommentsBlock";
 import { fetchPosts, fetchTags } from "../redux/slices/posts";
+import { fetchLastComments } from "../redux/slices/comments";
 
 export const Home = () => {
   const dispatch = useDispatch();
   const { posts, tags } = useSelector((state) => state.posts);
   const userData = useSelector((state) => state.auth.data);
+  const comments = useSelector((state) => state.comments.lastComments);
 
+  const isCommentsLoading = comments.status === "loading";
   const isPostsLoading = posts.status === "loading";
   const isTagsLoading = tags.status === "loading";
 
   const [selectedTab, setSelectedTab] = React.useState(0);
 
-  // получаем посты и теги с бэка, можно это делать и в App.js
+  // получаем посты и теги и последние 5 комментов из бд с бэка, можно это делать и в App.js
   React.useEffect(() => {
     dispatch(fetchPosts());
     dispatch(fetchTags());
+    dispatch(fetchLastComments());
   }, [dispatch]);
 
   //сортировка статей по новизне или просмотрам, потом это будет мэпиться в рендере
@@ -68,7 +72,7 @@ export const Home = () => {
                 user={obj.user}
                 createdAt={obj.createdAt}
                 viewsCount={obj.viewsCount}
-                commentsCount={3}
+                commentsCount={obj.commentsCount}
                 tags={obj.tags}
                 isEditable={userData?._id === obj.user._id}
               />
@@ -77,25 +81,22 @@ export const Home = () => {
         </Grid>
         <Grid xs={4} item>
           <TagsBlock items={tags.items} isLoading={isTagsLoading} />
-          <CommentsBlock
-            items={[
-              {
+          {isCommentsLoading ? (
+            <CommentsBlock isLoading={true} />
+          ) : comments.items && comments.items.length > 0 ? (
+            <CommentsBlock
+              items={comments.items.map((comment) => ({
                 user: {
-                  fullName: "Вася Пупкин",
-                  avatarUrl: "https://mui.com/static/images/avatar/1.jpg",
+                  fullName: comment.user.fullName,
+                  avatarUrl: comment.user.avatarUrl,
                 },
-                text: "Это тестовый комментарий",
-              },
-              {
-                user: {
-                  fullName: "Иван Иванов",
-                  avatarUrl: "https://mui.com/static/images/avatar/2.jpg",
-                },
-                text: "When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top",
-              },
-            ]}
-            isLoading={false}
-          />
+                text: comment.text,
+              }))}
+              isLoading={false}
+            />
+          ) : (
+            <p>Нет комментариев</p>
+          )}
         </Grid>
       </Grid>
     </>
