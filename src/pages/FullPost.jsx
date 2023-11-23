@@ -1,31 +1,40 @@
 import React from "react";
 
 import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import axios from "../axios";
 
 import { Post } from "../components/Post";
-import { Index } from "../components/AddComment";
+import { AddComment } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
 import ReactMarkdown from "react-markdown";
+import { fetchComments } from "../redux/slices/comments";
 
 export const FullPost = () => {
+  const dispatch = useDispatch();
+  const comments = useSelector((state) => state.comments.comments);
+  const isCommentsLoading = comments.status === "loading";
+
   const [data, setData] = React.useState();
   const [isLoading, setIsLoading] = React.useState(true);
   const { id } = useParams();
 
-  //загружает выбранный пост с бэка (по id)
   React.useEffect(() => {
     axios
       .get(`/posts/${id}`)
       .then((res) => {
         setData(res.data);
-        setIsLoading(false);
       })
+      .then(() => setIsLoading(false))
       .catch((err) => {
         console.warn(err);
         alert("Ошибка при получении статьи");
       });
-  }, []);
+  }, [id]);
+
+  React.useEffect(() => {
+    dispatch(fetchComments(id));
+  }, [dispatch, id]);
 
   if (isLoading) {
     return <Post isLoading={isLoading} isFullPost />;
@@ -34,7 +43,7 @@ export const FullPost = () => {
   return (
     <>
       <Post
-        id={data._id}
+        id={data?._id}
         title={data.title}
         imageUrl={data.imageUrl && `http://localhost:4444${data.imageUrl}`}
         user={data.user}
@@ -46,27 +55,23 @@ export const FullPost = () => {
       >
         <ReactMarkdown children={data.text} />
       </Post>
-      <CommentsBlock
-        items={[
-          {
+      <AddComment />
+      {isCommentsLoading ? (
+        <CommentsBlock isLoading={true} />
+      ) : comments.items && comments.items.length > 0 ? (
+        <CommentsBlock
+          items={comments.items.map((comment) => ({
             user: {
-              fullName: "Вася Пупкин",
-              avatarUrl: "https://mui.com/static/images/avatar/1.jpg",
+              fullName: comment.user.fullName,
+              avatarUrl: comment.user.avatarUrl,
             },
-            text: "Это тестовый комментарий 555555",
-          },
-          {
-            user: {
-              fullName: "Иван Иванов",
-              avatarUrl: "https://mui.com/static/images/avatar/2.jpg",
-            },
-            text: "When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top",
-          },
-        ]}
-        isLoading={false}
-      >
-        <Index />
-      </CommentsBlock>
+            text: comment.text,
+          }))}
+          isLoading={false}
+        />
+      ) : (
+        <p>Нет комментариев</p>
+      )}
     </>
   );
 };

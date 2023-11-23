@@ -12,7 +12,9 @@ import { TagsBlock } from "../components/TagsBlock";
 import { CommentsBlock } from "../components/CommentsBlock";
 import { fetchPosts, fetchTags } from "../redux/slices/posts";
 
-export const Home = () => {
+import { useParams } from "react-router-dom";
+
+export const TagsSearch = () => {
   const dispatch = useDispatch();
   const { posts, tags } = useSelector((state) => state.posts);
   const userData = useSelector((state) => state.auth.data);
@@ -22,10 +24,12 @@ export const Home = () => {
 
   const [selectedTab, setSelectedTab] = React.useState(0);
 
+  //вытаскиваем нужный тег из ссылки на страницу
+  const { id } = useParams();
+
   // получаем посты и теги с бэка, можно это делать и в App.js
   React.useEffect(() => {
     dispatch(fetchPosts());
-    dispatch(fetchTags());
   }, [dispatch]);
 
   //сортировка статей по новизне или просмотрам, потом это будет мэпиться в рендере
@@ -41,6 +45,11 @@ export const Home = () => {
     }
   }, [selectedTab, posts.items]);
 
+  // Фильтрация постов, чтобы отображались только те, у которых tags содержит id
+  const filteredPosts = React.useMemo(() => {
+    return sortedPosts.filter((post) => post.tags.includes(id));
+  }, [id, sortedPosts]);
+
   return (
     <>
       <Tabs
@@ -54,7 +63,7 @@ export const Home = () => {
       </Tabs>
       <Grid container spacing={4}>
         <Grid xs={8} item>
-          {(isPostsLoading ? [...Array(5)] : sortedPosts).map((obj, index) =>
+          {(isPostsLoading ? [...Array(5)] : filteredPosts).map((obj, index) =>
             isPostsLoading ? (
               <Post key={index} isLoading={true} />
             ) : (
@@ -74,28 +83,6 @@ export const Home = () => {
               />
             )
           )}
-        </Grid>
-        <Grid xs={4} item>
-          <TagsBlock items={tags.items} isLoading={isTagsLoading} />
-          <CommentsBlock
-            items={[
-              {
-                user: {
-                  fullName: "Вася Пупкин",
-                  avatarUrl: "https://mui.com/static/images/avatar/1.jpg",
-                },
-                text: "Это тестовый комментарий",
-              },
-              {
-                user: {
-                  fullName: "Иван Иванов",
-                  avatarUrl: "https://mui.com/static/images/avatar/2.jpg",
-                },
-                text: "When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top",
-              },
-            ]}
-            isLoading={false}
-          />
         </Grid>
       </Grid>
     </>
